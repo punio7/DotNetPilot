@@ -12,6 +12,14 @@
         "dist/browser/signalr.js.map",
         "dist/browser/signalr.js"
       ]
+    },
+    {
+      "library": "jquery@3.3.1",
+      "destination": "wwwroot/lib/jquery/dist/"
+    },
+    {
+      "library": "font-awesome@4.7.0",
+      "destination": "wwwroot/lib/font-awesome/"
     }
   ]
 }

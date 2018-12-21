@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Pilot.Hubs;
+using Pilot.Logic.Managers;
 
 namespace Pilot
 {
@@ -56,6 +58,13 @@ namespace Pilot
             app.UseSignalR(routes =>
             {
                 routes.MapHub<PilotHub>("/pilotHub");
+            });
+            app.Use(async (context, next) =>
+            {
+                IHubContext<PilotHub> hubContext = context.RequestServices
+                                        .GetRequiredService<IHubContext<PilotHub>>();
+                SongManager.CreateInstance(@"D:\foobar2000\nowPlaying.txt", hubContext);
+                await next();
             });
             app.UseMvc(routes =>
             {

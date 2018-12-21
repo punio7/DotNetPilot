@@ -35,3 +35,12 @@ body {
         display: none;
     }
 }
+
+.input-group-addon {
+    min-width: 105px;
+    text-align: center;
+}
+
+.form-control[readonly] {
+    background-color: transparent;
+}

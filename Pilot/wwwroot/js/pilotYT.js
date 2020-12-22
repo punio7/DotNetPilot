@@ -1,6 +1,8 @@
 ﻿var signalRConnection;
 var songCurrentPosition = 0;
 var songLength = 1;
+var interval = null;
+var player;
 
 //document.getElementById("playButton").addEventListener("click", function (event) {
 //    connection.invoke("SendMessage", "play").catch(function (err) {
@@ -36,15 +38,34 @@ $(document).ready(() => {
     signalRConnection.on("songUpdate", () => {
         updateSongInfo();
     });
-    signalRConnection.on("songUpdatePosition", (newPosition) => {
-        songCurrentPosition = newPosition;
-        updateSongProgress();
-    });
 
     signalRConnection.start().catch(function (err) {
         return console.error(err.toString());
     });
 });
+
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+        height: '360',
+        width: '640',
+        videoId: 'M7lc1UVf-VE',
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+        }
+    });
+}
+
+function onPlayerReady(event) {
+    event.target.playVideo();
+}
+
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING && !done) {
+        //setTimeout(stopVideo, 6000);
+        //done = true;
+    }
+}
 
 function ajaxAction(actionName, callback) {
     var ajaxOptions = {
@@ -65,39 +86,31 @@ function ajaxOnSuccess(value) {
 }
 
 function updateSongInfo() {
-    ajaxAction('Info', songUpdateCallback);
+    //ajaxAction('Info', songUpdateCallback);
 }
 
 function songUpdateCallback(songInfo) {
-    updateTagField("#songTitle", songInfo.title);
-    updateTagField("#songArtist", songInfo.artist);
-    updateTagField("#songAlbum", songInfo.album);
-    updateTagField("#songTrack", songInfo.track);
-    updateTagField("#songYear", songInfo.year);
-    updateTagField("#songGenere", songInfo.genere);
+    $('#songTitle').val(songInfo.title);
+    $('#songArtist').val(songInfo.artist);
+    $('#songAlbum').val(songInfo.album);
     d = new Date();
     $('#songImage').attr('src', '/Pilot/Image?' + d.getTime());
     songLength = songInfo.length;
     songCurrentPosition = songInfo.currentPosition;
+    
 
     if (songLength > 0) {
-        document.title = "▶ " + songInfo.title + " - Pilot";
         updateSongProgress();
+        if (interval === null) {
+            interval = setInterval(updateSongProgress, 1000);
+        }
     }
     else {
-        document.title = "⏹ Zatrzymany - Pilot";
+        if (interval !== null) {
+            clearInterval(interval);
+            interval = null;
+        }
         resetSongProgress();
-    }
-}
-
-function updateTagField(selector, value) {
-    if (value === undefined || value === null || value === "") {
-        $(selector).parent().hide();
-        $(selector).val("");
-    }
-    else {
-        $(selector).parent().show();
-        $(selector).val(value);
     }
 }
 
@@ -105,6 +118,7 @@ function updateSongProgress() {
     var percentage = (songCurrentPosition / songLength) * 100;
     $('#songProgress').css('width', percentage + '%');
     $('#songTime').text(formatSeconds(songCurrentPosition) + ' / ' + formatSeconds(songLength));
+    songCurrentPosition++;
 }
 
 function resetSongProgress() {

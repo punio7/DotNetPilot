@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Pilot.Models
+﻿namespace Pilot.Models
 {
     public class SongInfo
     {
@@ -13,7 +8,10 @@ namespace Pilot.Models
         public byte[] Image { get; set; }
         public string ImageMimeType { get; set; }
         public int Length { get; set; }
-        public DateTime StartTime { get; set; }
         public int CurrentPosition { get; set; }
+        public string Path { get; internal set; }
+        public uint? Track { get; internal set; }
+        public uint? Year { get; internal set; }
+        public string Genere { get; internal set; }
     }
 }

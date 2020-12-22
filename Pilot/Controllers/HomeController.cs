@@ -15,6 +15,11 @@ namespace Pilot.Controllers
             return View();
         }
 
+        public IActionResult PilotYT()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Pilot.Logic.Managers;
 using Pilot.Logic.WinKeys;
 
@@ -49,7 +45,6 @@ namespace Pilot.Controllers
 
         public IActionResult Info()
         {
-            SongManager.Instance.CurrentSong.CurrentPosition = (int)(DateTime.Now - SongManager.Instance.CurrentSong.StartTime).TotalSeconds;
             return Json(SongManager.Instance.CurrentSong);
         }
 

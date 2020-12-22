@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Pilot.Hubs;
+using Pilot.Logic.Configuration;
 using Pilot.Models;
 using TagLib;
 
@@ -24,12 +24,15 @@ namespace Pilot.Logic.Managers
         {
             emptySong = new SongInfo()
             {
+                Path = string.Empty,
+                Track = null,
                 Title = string.Empty,
                 Artist = string.Empty,
                 Album = string.Empty,
+                Year = null,
+                Genere = string.Empty,
                 Image = System.IO.File.ReadAllBytes(@"wwwroot\images\noImage.png"),
                 ImageMimeType = "image/png",
-                StartTime = DateTime.Now,
                 Length = 0,
                 CurrentPosition = 0,
             };
@@ -38,12 +41,13 @@ namespace Pilot.Logic.Managers
             CreateWatcher(nowPlayingFilePath);
         }
 
-        public static void CreateInstance(string nowPlayingFilePath, IHubContext<PilotHub> pilotHubContext)
+        public static void CreateInstance(IConfiguration configuration, IHubContext<PilotHub> pilotHubContext)
         {
             if (Instance != null)
             {
                 return;
             }
+            string nowPlayingFilePath = configuration.GetPilotConfig().NowPlayingFilePath;
             Instance = new SongManager(nowPlayingFilePath, pilotHubContext);
         }
 
@@ -74,8 +78,7 @@ namespace Pilot.Logic.Managers
                 try
                 {
                     string nowPlayingContent = System.IO.File.ReadAllText(e.FullPath);
-                    DateTime editTime = System.IO.File.GetLastWriteTime(e.FullPath);
-                    ProcessSongChange(nowPlayingContent, editTime);
+                    ProcessSongChange(nowPlayingContent);
                     break;
                 }
                 catch (IOException)
@@ -85,39 +88,98 @@ namespace Pilot.Logic.Managers
             }
         }
 
-        void ProcessSongChange(string songPath, DateTime playStartTime)
+        void ProcessSongChange(string nowPlayingContent)
         {
-            if (!System.IO.File.Exists(songPath))
-            {
-                CurrentSong = emptySong;
-                SendSignalRAlert();
-                return;
-            }
-            var tagFile = TagLib.File.Create(songPath);
-            if (tagFile.Tag == null)
-            {
-                CurrentSong = emptySong;
-                SendSignalRAlert();
-                return;
-            }
-            SongInfo newSongInfo = new SongInfo()
-            {
-                Title = tagFile.Tag.Title,
-                Artist = tagFile.Tag.FirstAlbumArtist,
-                Album = tagFile.Tag.Album,
-                Length = (int)tagFile.Properties.Duration.TotalSeconds,
-                StartTime = playStartTime,
-            };
-            var picture = SelectPictureFromArray(tagFile.Tag.Pictures);
-            ProcessSongPicture(newSongInfo, picture);
+            var nowPlayingArray = nowPlayingContent.Split(Environment.NewLine);
+            string songPath = nowPlayingArray[0];
 
-            CurrentSong = newSongInfo;
-            SendSignalRAlert();
+            if (songPath == "n/a" || !System.IO.File.Exists(songPath))
+            {
+                CurrentSong = emptySong;
+                SendSignalRAlert();
+            }
+            else if (CurrentSong.Path == songPath)
+            {
+                UpdateCurrentPosition(CurrentSong, nowPlayingArray);
+                SendSignalRAlertPosition();
+            }
+            else
+            {
+                LoadNewSongInfo(nowPlayingArray, songPath); 
+                SendSignalRAlert();
+            }
+        }
+
+        private void LoadNewSongInfo(string[] nowPlayingArray, string songPath)
+        {
+            using (var tagFile = TagLib.File.Create(songPath))
+            {
+                if (tagFile.Tag == null)
+                {
+                    CurrentSong = emptySong;
+                }
+                else
+                {
+                    SongInfo newSongInfo = new SongInfo()
+                    {
+                        Path = songPath,
+                        Track = tagFile.Tag.Track != default(uint) ? tagFile.Tag.Track : (uint?)null,
+                        Title = GetTitle(tagFile),
+                        Artist = GetAlbumArtist(tagFile),
+                        Album = tagFile.Tag.Album,
+                        Year = tagFile.Tag.Year != default(uint) ? tagFile.Tag.Year : (uint?)null,
+                        Genere = tagFile.Tag.JoinedGenres,
+                        Length = (int)tagFile.Properties.Duration.TotalSeconds,
+                    };
+                    UpdateCurrentPosition(newSongInfo, nowPlayingArray);
+                    var picture = SelectPictureFromArray(tagFile.Tag.Pictures);
+                    ProcessSongPicture(newSongInfo, picture);
+
+                    CurrentSong = newSongInfo;
+                }
+            }
+        }
+
+        private static string GetTitle(TagLib.File tagFile)
+        {
+            if (!string.IsNullOrEmpty(tagFile.Tag.Title))
+            {
+                return tagFile.Tag.Title;
+            }
+            return tagFile.Name;
+        }
+
+        private static string GetAlbumArtist(TagLib.File tagFile)
+        {
+            if (!string.IsNullOrEmpty(tagFile.Tag.FirstAlbumArtist))
+            {
+                return tagFile.Tag.FirstAlbumArtist; 
+            }
+            else if (tagFile.Tag.AlbumArtists.Any())
+            {
+                return string.Join(",", tagFile.Tag.AlbumArtists);
+            }
+            else
+            {
+                return string.Join(",", tagFile.Tag.Artists);
+            }
+        }
+
+        private void UpdateCurrentPosition(SongInfo songInfo, string[] nowPlayingArray)
+        {
+            string currentPositionString = nowPlayingArray.Length > 1 ? nowPlayingArray[1] : null;
+            int currentPosition = !string.IsNullOrEmpty(currentPositionString) ? int.Parse(currentPositionString) : 0;
+            songInfo.CurrentPosition = currentPosition;
         }
 
         private void SendSignalRAlert()
         {
-            pilotHubContext.Clients.All.SendAsync("songUpdate");
+            pilotHubContext.Clients.All.SendAsync(PilotHub.ClientMethods.SongUpdate);
+        }
+
+        private void SendSignalRAlertPosition()
+        {
+            pilotHubContext.Clients.All.SendAsync(PilotHub.ClientMethods.SongUpdatePosition, CurrentSong.CurrentPosition);
         }
 
         IPicture SelectPictureFromArray(IPicture[] pictureArray)

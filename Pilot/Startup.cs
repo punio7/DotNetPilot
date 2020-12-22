@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -63,7 +58,7 @@ namespace Pilot
             {
                 IHubContext<PilotHub> hubContext = context.RequestServices
                                         .GetRequiredService<IHubContext<PilotHub>>();
-                SongManager.CreateInstance(@"D:\foobar2000\nowPlaying.txt", hubContext);
+                SongManager.CreateInstance(Configuration, hubContext);
                 await next();
             });
             app.UseMvc(routes =>

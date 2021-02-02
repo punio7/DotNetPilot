@@ -17,8 +17,8 @@ namespace Pilot.Logic.Managers
         public static SongManager Instance;
 
         private FileSystemWatcher watcher;
-        private SongInfo emptySong;
-        private IHubContext<PilotHub> pilotHubContext;
+        private readonly SongInfo emptySong;
+        private readonly IHubContext<PilotHub> pilotHubContext;
 
         private SongManager(string nowPlayingFilePath, IHubContext<PilotHub> pilotHubContext)
         {
@@ -123,11 +123,11 @@ namespace Pilot.Logic.Managers
                     SongInfo newSongInfo = new SongInfo()
                     {
                         Path = songPath,
-                        Track = tagFile.Tag.Track != default(uint) ? tagFile.Tag.Track : (uint?)null,
+                        Track = tagFile.Tag.Track != default ? tagFile.Tag.Track : (uint?)null,
                         Title = GetTitle(tagFile),
                         Artist = GetAlbumArtist(tagFile),
                         Album = tagFile.Tag.Album,
-                        Year = tagFile.Tag.Year != default(uint) ? tagFile.Tag.Year : (uint?)null,
+                        Year = tagFile.Tag.Year != default ? tagFile.Tag.Year : (uint?)null,
                         Genere = tagFile.Tag.JoinedGenres,
                         Length = (int)tagFile.Properties.Duration.TotalSeconds,
                     };
@@ -161,7 +161,9 @@ namespace Pilot.Logic.Managers
             }
             else
             {
+#pragma warning disable CS0618 // Type or member is obsolete. AlbumArtists sometimes doesn't return Artists
                 return string.Join(",", tagFile.Tag.Artists);
+#pragma warning restore CS0618 // Type or member is obsolete
             }
         }
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Pilot.Hubs;
+using Pilot.Logic.DependencyInjection;
 using Pilot.Logic.Managers;
 
 namespace Pilot
@@ -32,6 +33,8 @@ namespace Pilot
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSignalR();
+
+            DependencyRegister.RegisterDependencies(services);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -6,40 +6,40 @@ namespace Pilot.Controllers
 {
     public class PilotController : Controller
     {
-        public KeyEventsManager KeyEventsManager { get; set; }
+        private readonly KeyEventsManager keyEventsManager;
 
-        public PilotController()
+        public PilotController(KeyEventsManager keyEventsManager)
         {
-            KeyEventsManager = new KeyEventsManager();
+            this.keyEventsManager = keyEventsManager;
         }
 
         public IActionResult LaunchMedia()
         {
-            KeyEventsManager.SendKeyEvent(KeyCode.LAUNCH_MEDIA_SELECT);
+            keyEventsManager.SendKeyEvent(KeyCode.LAUNCH_MEDIA_SELECT);
             return Json(true);
         }
 
         public IActionResult Play()
         {
-            KeyEventsManager.SendKeyEvent(KeyCode.MEDIA_PLAY_PAUSE);
+            keyEventsManager.SendKeyEvent(KeyCode.MEDIA_PLAY_PAUSE);
             return Json(true);
         }
 
         public IActionResult Previous()
         {
-            KeyEventsManager.SendKeyEvent(KeyCode.MEDIA_PREV_TRACK);
+            keyEventsManager.SendKeyEvent(KeyCode.MEDIA_PREV_TRACK);
             return Json(true);
         }
 
         public IActionResult Next()
         {
-            KeyEventsManager.SendKeyEvent(KeyCode.MEDIA_NEXT_TRACK);
+            keyEventsManager.SendKeyEvent(KeyCode.MEDIA_NEXT_TRACK);
             return Json(true);
         }
 
         public IActionResult Stop()
         {
-            KeyEventsManager.SendKeyEvent(KeyCode.MEDIA_STOP);
+            keyEventsManager.SendKeyEvent(KeyCode.MEDIA_STOP);
             return Json(true);
         }
 

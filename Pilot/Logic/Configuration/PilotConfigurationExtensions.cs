@@ -9,5 +9,11 @@ namespace Pilot.Logic.Configuration
         {
             return config.GetSection("PilotConfig").Get<PilotConfig>();
         }
+
+        public static string[] GetServerUrls(this IConfiguration config)
+        {
+            string value = config.GetValue<string>("server.urls");
+            return value.Split(';');
+        }
     }
 }

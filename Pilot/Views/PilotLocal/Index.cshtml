@@ -2,10 +2,22 @@
     ViewData["Title"] = "Pilot medialny";
 }
 
+@section DevStyles
+{
+    <link rel="stylesheet" href="~/css/pilotLocal.css" />
+}
+
+@section Scripts {
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/pilotLocal.js"></script>
+}
+
 <div class="container">
     <div class="row">&nbsp;</div>
     <div class="col-sm-12 col-md-4 col-lg-3">
-        <img id="songImage" class="media-object" style="width: 250px; height: 250px;" src="" />
+        <img id="songImage" class="media-object song-cover" src="" />
+        <div id="karaokeBox" class="karaoke">
+        </div>
         <div class="row">&nbsp;</div>
     </div>
     <div class="col-sm-12 col-md-8 col-lg-9">
@@ -62,9 +74,4 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
-    <script src="~/js/pilot.js"></script>
-}
 

@@ -13,5 +13,6 @@
         public uint? Track { get; internal set; }
         public uint? Year { get; internal set; }
         public string Genere { get; internal set; }
+        public Lyric[] Lyrics { get; set; }
     }
 }

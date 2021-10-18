@@ -4,13 +4,18 @@ using Pilot.Logic.WinKeys;
 
 namespace Pilot.Controllers
 {
-    public class PilotController : Controller
+    public class PilotLocalController : Controller
     {
         private readonly KeyEventsManager keyEventsManager;
 
-        public PilotController(KeyEventsManager keyEventsManager)
+        public PilotLocalController(KeyEventsManager keyEventsManager)
         {
             this.keyEventsManager = keyEventsManager;
+        }
+
+        public IActionResult Index()
+        {
+            return View();
         }
 
         public IActionResult LaunchMedia()

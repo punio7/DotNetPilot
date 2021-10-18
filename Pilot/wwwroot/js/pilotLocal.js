@@ -1,13 +1,11 @@
 ﻿var signalRConnection;
 var songCurrentPosition = 0;
 var songLength = 1;
-
-//document.getElementById("playButton").addEventListener("click", function (event) {
-//    connection.invoke("SendMessage", "play").catch(function (err) {
-//        return console.error(err.toString());
-//    });
-//    event.preventDefault();
-//});
+var karaokeTimeout = null;
+var karaokeCurrentLine = 0;
+var karaokeLineCount = 0;
+var karaokeLyrics = null;
+var lyricsOffset = 500;
 
 $(document).ready(() => {
     $("#mediaButton").click((e) => {
@@ -48,7 +46,7 @@ $(document).ready(() => {
 
 function ajaxAction(actionName, callback) {
     var ajaxOptions = {
-        url: '/Pilot/' + actionName
+        url: '/PilotLocal/' + actionName
     };
     if (callback !== undefined) {
         ajaxOptions.success = callback;
@@ -76,17 +74,21 @@ function songUpdateCallback(songInfo) {
     updateTagField("#songYear", songInfo.year);
     updateTagField("#songGenere", songInfo.genere);
     d = new Date();
-    $('#songImage').attr('src', '/Pilot/Image?' + d.getTime());
+    $('#songImage').attr('src', '/PilotLocal/Image?' + d.getTime());
     songLength = songInfo.length;
     songCurrentPosition = songInfo.currentPosition;
+    karaokeLyrics = songInfo.lyrics;
+    loadKaraoke();
 
     if (songLength > 0) {
         document.title = "▶ " + songInfo.title + " - Pilot";
         updateSongProgress();
+        startKaraoke();
     }
     else {
         document.title = "⏹ Zatrzymany - Pilot";
         resetSongProgress();
+        resetKaraoke();
     }
 }
 
@@ -119,4 +121,69 @@ function formatSeconds(totalSeconds) {
         seconds = '0' + seconds;
     }
     return minutes + ':' + seconds;
+}
+
+function loadKaraoke() {
+    var karaokeBox = $('#karaokeBox');
+    karaokeBox.empty();
+    $('#songImage').removeClass('karaoke-background');
+    if (karaokeLyrics != null) {
+        $('#songImage').addClass('karaoke-background');
+        karaokeBox.append('<div style="height:112px;">&nbsp;</div>');
+        karaokeLyrics.forEach((lyric) => {
+            karaokeBox.append('<div>' + lyric.text + '</div>');
+        })
+    }
+}
+
+function startKaraoke() {
+    resetKaraoke();
+    if (karaokeLyrics != null) {
+        karaokeLineCount = karaokeLyrics.length;
+        var milliseconds = karaokeLyrics[0].milliseconds;
+        if (milliseconds > lyricsOffset) {
+            milliseconds -= lyricsOffset;
+        }
+        karaokeQueueNextLine(milliseconds);
+    }
+}
+
+function resetKaraoke() {
+    if (karaokeTimeout !== null) {
+        window.clearTimeout(karaokeTimeout);
+    }
+    karaokeCurrentLine = 0;
+    karaokeLineCount = 0;
+    karaokeScroll(0);
+}
+
+function karaokeNextLine() {
+    if (karaokeCurrentLine > karaokeLineCount) {
+        return;
+    }
+    karaokeCurrentLine++;
+    var millisecondsDifference =
+        karaokeLyrics[karaokeCurrentLine].milliseconds - karaokeLyrics[karaokeCurrentLine - 1].milliseconds;
+    karaokeQueueNextLine(millisecondsDifference);
+    karaokeGoToLine(karaokeCurrentLine);
+}
+
+function karaokeQueueNextLine(miliseconds) {
+    karaokeTimeout = window.setTimeout(karaokeNextLine, miliseconds);
+}
+
+function karaokeGoToLine(newLine) {
+    $('#karaokeBox div:nth-child(' + newLine + ')').removeClass('karaoke-current-line');
+    var currentLineElement = $('#karaokeBox div:nth-child(' + (newLine + 1) + ')');
+    currentLineElement.addClass('karaoke-current-line');
+    var newPosition = currentLineElement[0].offsetTop - 112;
+    karaokeScroll(newPosition);
+}
+
+function karaokeScroll(topPixels) {
+    $("#karaokeBox")[0].scroll({
+        top: topPixels,
+        left: 0,
+        behavior: 'smooth'
+    });
 }

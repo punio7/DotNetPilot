@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Pilot.Models;
 
@@ -12,12 +8,7 @@ namespace Pilot.Controllers
     {
         public IActionResult Index()
         {
-            return View();
-        }
-
-        public IActionResult PilotYT()
-        {
-            return View();
+            return RedirectToAction("Index", "PilotLocal");
         }
 
         public IActionResult Privacy()

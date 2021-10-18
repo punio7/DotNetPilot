@@ -3,5 +3,6 @@
     public class PilotConfig
     {
         public string NowPlayingFilePath { get; set; }
+        public string LyricsPath { get; set; }
     }
 }

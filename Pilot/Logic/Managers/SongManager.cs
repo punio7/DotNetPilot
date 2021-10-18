@@ -14,13 +14,15 @@ namespace Pilot.Logic.Managers
     public class SongManager
     {
         public SongInfo CurrentSong { get; set; }
+        public LyricsManager LyricsManager { get; set; }
         public static SongManager Instance;
 
         private FileSystemWatcher watcher;
         private readonly SongInfo emptySong;
+        private readonly string lyricsPath;
         private readonly IHubContext<PilotHub> pilotHubContext;
 
-        private SongManager(string nowPlayingFilePath, IHubContext<PilotHub> pilotHubContext)
+        private SongManager(string nowPlayingFilePath, string lyricsPath, IHubContext<PilotHub> pilotHubContext)
         {
             emptySong = new SongInfo()
             {
@@ -37,6 +39,8 @@ namespace Pilot.Logic.Managers
                 CurrentPosition = 0,
             };
             CurrentSong = emptySong;
+            LyricsManager = new LyricsManager();
+            this.lyricsPath = lyricsPath;
             this.pilotHubContext = pilotHubContext;
             CreateWatcher(nowPlayingFilePath);
         }
@@ -48,7 +52,8 @@ namespace Pilot.Logic.Managers
                 return;
             }
             string nowPlayingFilePath = configuration.GetPilotConfig().NowPlayingFilePath;
-            Instance = new SongManager(nowPlayingFilePath, pilotHubContext);
+            string lyricsPath = configuration.GetPilotConfig().LyricsPath;
+            Instance = new SongManager(nowPlayingFilePath, lyricsPath, pilotHubContext);
         }
 
         private void CreateWatcher(string nowPlayingFilePath)
@@ -134,10 +139,25 @@ namespace Pilot.Logic.Managers
                     UpdateCurrentPosition(newSongInfo, nowPlayingArray);
                     var picture = SelectPictureFromArray(tagFile.Tag.Pictures);
                     ProcessSongPicture(newSongInfo, picture);
+                    ProcessLyrics(newSongInfo);
 
                     CurrentSong = newSongInfo;
                 }
             }
+        }
+
+        private void ProcessLyrics(SongInfo songInfo)
+        {
+            if (string.IsNullOrEmpty(lyricsPath) || !Directory.Exists(lyricsPath))
+            {
+                return;
+            }
+            string lyricsFilePath = $"{lyricsPath}\\{songInfo.Artist} - {songInfo.Title}.lrc";
+            if (!System.IO.File.Exists(lyricsFilePath))
+            {
+                return;
+            }
+            songInfo.Lyrics = LyricsManager.ParseLyrics(lyricsFilePath);
         }
 
         private static string GetTitle(TagLib.File tagFile)
